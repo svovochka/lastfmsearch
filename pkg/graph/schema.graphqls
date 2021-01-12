@@ -1,0 +1,17 @@
+type Track {
+  title: String!
+  url: String!
+  listeners: Int!
+  artist: Artist!
+}
+
+type Artist {
+  id: ID!
+  name: String!
+  url: String!
+  summary: String!
+}
+
+type Query {
+  findTracksByTitle(title: String): [Track!]!
+}

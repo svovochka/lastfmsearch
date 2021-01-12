@@ -5,6 +5,12 @@ import (
 	"github.com/jessevdk/go-flags"
 	"lastfmsearch/cmd/lastfmsearch/config"
 	"os"
+	"log"
+	"net/http"
+	"lastfmsearch/pkg/graph"
+	"lastfmsearch/pkg/graph/generated"
+	"github.com/99designs/gqlgen/graphql/handler"
+	"github.com/99designs/gqlgen/graphql/playground"
 )
 
 var cfg config.Config
@@ -21,7 +27,15 @@ func init() {
 	}
 }
 
-// main Main
+// main Main func
 func main() {
-	fmt.Println("It's alive!")
+	fmt.Println("Starting lastfmsearch service...")
+
+	srv := handler.NewDefaultServer(generated.NewExecutableSchema(generated.Config{Resolvers: &graph.Resolver{}}))
+	http.Handle("/query", srv)
+	if cfg.EnablePlayground {
+		http.Handle("/playground", playground.Handler("GraphQL playground", "/query"))
+		log.Printf("connect to http://localhost:%s/playground for GraphQL playground", cfg.HttpPort)
+	}
+	log.Fatal(http.ListenAndServe(":"+cfg.HttpPort, nil))
 }

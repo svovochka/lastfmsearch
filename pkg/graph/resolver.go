@@ -2,38 +2,37 @@ package graph
 
 import (
 	"context"
-	"errors"
+	"fmt"
 	"github.com/99designs/gqlgen/graphql"
 	"lastfmsearch/pkg/graph/model"
+	"lastfmsearch/pkg/lastfm"
+	"lastfmsearch/pkg/lastfmsearch"
 )
 
-type Resolver struct{}
-
-func (r *Resolver) doFindTracksByTitle(ctx context.Context, title *string) ([]*model.Track, error) {
-	//preloads := getPreloads(ctx)
-	return nil, errors.New("something fucked up")
-}
-
-func getPreloads(ctx context.Context) []string {
-	return getNestedPreloads(
-		graphql.GetOperationContext(ctx),
-		graphql.CollectFieldsCtx(ctx, nil),
-		"",
-	)
-}
-
-func getNestedPreloads(ctx *graphql.OperationContext, fields []graphql.CollectedField, prefix string) (preloads []string) {
-	for _, column := range fields {
-		prefixColumn := getPreloadString(prefix, column.Name)
-		preloads = append(preloads, prefixColumn)
-		preloads = append(preloads, getNestedPreloads(ctx, graphql.CollectFields(ctx, column.Selections, nil), prefixColumn)...)
+// NewClient Create new client
+func NewResolver(lastfmClient *lastfm.Client) *Resolver {
+	return &Resolver{
+		lastfmClient: lastfmClient,
 	}
-	return
 }
 
-func getPreloadString(prefix, name string) string {
-	if len(prefix) > 0 {
-		return prefix + "." + name
+type Resolver struct {
+	lastfmClient *lastfm.Client
+}
+
+func (r *Resolver) doFindTracksByName(ctx context.Context, name *string) ([]*model.Track, error) {
+	withArtists := false
+	for _, field := range graphql.CollectFieldsCtx(ctx, nil) {
+		if field.Name == "artist" {
+			withArtists = true
+		}
 	}
-	return name
+	loader := lastfmsearch.NewLoader(r.lastfmClient)
+	tracks, err := loader.FindTracksByName(ctx, *name, withArtists)
+	if err != nil {
+		return nil, fmt.Errorf("failed to execute http request: %w", err)
+	}
+	mapper := &MapperToGraph{}
+
+	return mapper.mapTracksList(tracks), nil
 }

@@ -1,5 +1,5 @@
 type Track {
-  title: String!
+  name: String!
   url: String!
   listeners: Int!
   artist: Artist!
@@ -13,5 +13,5 @@ type Artist {
 }
 
 type Query {
-  findTracksByTitle(title: String): [Track!]!
+  findTracksByName(name: String): [Track!]!
 }

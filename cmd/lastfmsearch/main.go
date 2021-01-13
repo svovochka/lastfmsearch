@@ -2,15 +2,16 @@ package main
 
 import (
 	"fmt"
-	"github.com/jessevdk/go-flags"
-	"lastfmsearch/cmd/lastfmsearch/config"
-	"os"
-	"log"
-	"net/http"
-	"lastfmsearch/pkg/graph"
-	"lastfmsearch/pkg/graph/generated"
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
+	"github.com/jessevdk/go-flags"
+	"lastfmsearch/cmd/lastfmsearch/config"
+	"lastfmsearch/pkg/graph"
+	"lastfmsearch/pkg/graph/generated"
+	"lastfmsearch/pkg/lastfm"
+	"log"
+	"net/http"
+	"os"
 )
 
 var cfg config.Config
@@ -31,7 +32,9 @@ func init() {
 func main() {
 	fmt.Println("Starting lastfmsearch service...")
 
-	srv := handler.NewDefaultServer(generated.NewExecutableSchema(generated.Config{Resolvers: &graph.Resolver{}}))
+	client := lastfm.NewClient(cfg.LastfmApiEndpoint, cfg.LastfmApiKey, 1)
+	resolver := graph.NewResolver(client)
+	srv := handler.NewDefaultServer(generated.NewExecutableSchema(generated.Config{Resolvers: resolver}))
 	http.Handle("/query", srv)
 	if cfg.EnablePlayground {
 		http.Handle("/playground", playground.Handler("GraphQL playground", "/query"))

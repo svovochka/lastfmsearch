@@ -50,19 +50,19 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
-		FindTracksByTitle func(childComplexity int, title *string) int
+		FindTracksByName func(childComplexity int, name *string) int
 	}
 
 	Track struct {
 		Artist    func(childComplexity int) int
 		Listeners func(childComplexity int) int
-		Title     func(childComplexity int) int
+		Name      func(childComplexity int) int
 		URL       func(childComplexity int) int
 	}
 }
 
 type QueryResolver interface {
-	FindTracksByTitle(ctx context.Context, title *string) ([]*model.Track, error)
+	FindTracksByName(ctx context.Context, name *string) ([]*model.Track, error)
 }
 
 type executableSchema struct {
@@ -108,17 +108,17 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Artist.URL(childComplexity), true
 
-	case "Query.findTracksByTitle":
-		if e.complexity.Query.FindTracksByTitle == nil {
+	case "Query.findTracksByName":
+		if e.complexity.Query.FindTracksByName == nil {
 			break
 		}
 
-		args, err := ec.field_Query_findTracksByTitle_args(context.TODO(), rawArgs)
+		args, err := ec.field_Query_findTracksByName_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Query.FindTracksByTitle(childComplexity, args["title"].(*string)), true
+		return e.complexity.Query.FindTracksByName(childComplexity, args["name"].(*string)), true
 
 	case "Track.artist":
 		if e.complexity.Track.Artist == nil {
@@ -134,12 +134,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Track.Listeners(childComplexity), true
 
-	case "Track.title":
-		if e.complexity.Track.Title == nil {
+	case "Track.name":
+		if e.complexity.Track.Name == nil {
 			break
 		}
 
-		return e.complexity.Track.Title(childComplexity), true
+		return e.complexity.Track.Name(childComplexity), true
 
 	case "Track.url":
 		if e.complexity.Track.URL == nil {
@@ -199,7 +199,7 @@ func (ec *executionContext) introspectType(name string) (*introspection.Type, er
 
 var sources = []*ast.Source{
 	{Name: "pkg/graph/schema.graphqls", Input: `type Track {
-  title: String!
+  name: String!
   url: String!
   listeners: Int!
   artist: Artist!
@@ -213,7 +213,7 @@ type Artist {
 }
 
 type Query {
-  findTracksByTitle(title: String): [Track!]!
+  findTracksByName(name: String): [Track!]!
 }
 `, BuiltIn: false},
 }
@@ -238,18 +238,18 @@ func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs
 	return args, nil
 }
 
-func (ec *executionContext) field_Query_findTracksByTitle_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Query_findTracksByName_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
 	var arg0 *string
-	if tmp, ok := rawArgs["title"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("title"))
+	if tmp, ok := rawArgs["name"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
 		arg0, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["title"] = arg0
+	args["name"] = arg0
 	return args, nil
 }
 
@@ -431,7 +431,7 @@ func (ec *executionContext) _Artist_summary(ctx context.Context, field graphql.C
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Query_findTracksByTitle(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+func (ec *executionContext) _Query_findTracksByName(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -448,7 +448,7 @@ func (ec *executionContext) _Query_findTracksByTitle(ctx context.Context, field 
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Query_findTracksByTitle_args(ctx, rawArgs)
+	args, err := ec.field_Query_findTracksByName_args(ctx, rawArgs)
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
@@ -456,7 +456,7 @@ func (ec *executionContext) _Query_findTracksByTitle(ctx context.Context, field 
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().FindTracksByTitle(rctx, args["title"].(*string))
+		return ec.resolvers.Query().FindTracksByName(rctx, args["name"].(*string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -544,7 +544,7 @@ func (ec *executionContext) _Query___schema(ctx context.Context, field graphql.C
 	return ec.marshalO__Schema2ᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐSchema(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Track_title(ctx context.Context, field graphql.CollectedField, obj *model.Track) (ret graphql.Marshaler) {
+func (ec *executionContext) _Track_name(ctx context.Context, field graphql.CollectedField, obj *model.Track) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -562,7 +562,7 @@ func (ec *executionContext) _Track_title(ctx context.Context, field graphql.Coll
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Title, nil
+		return obj.Name, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1836,7 +1836,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Query")
-		case "findTracksByTitle":
+		case "findTracksByName":
 			field := field
 			out.Concurrently(i, func() (res graphql.Marshaler) {
 				defer func() {
@@ -1844,7 +1844,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Query_findTracksByTitle(ctx, field)
+				res = ec._Query_findTracksByName(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}
@@ -1876,8 +1876,8 @@ func (ec *executionContext) _Track(ctx context.Context, sel ast.SelectionSet, ob
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Track")
-		case "title":
-			out.Values[i] = ec._Track_title(ctx, field, obj)
+		case "name":
+			out.Values[i] = ec._Track_name(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}

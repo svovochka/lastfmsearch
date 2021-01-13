@@ -10,7 +10,7 @@ type Artist struct {
 }
 
 type Track struct {
-	Title     string  `json:"title"`
+	Name      string  `json:"name"`
 	URL       string  `json:"url"`
 	Listeners int     `json:"listeners"`
 	Artist    *Artist `json:"artist"`

@@ -9,8 +9,8 @@ import (
 	"lastfmsearch/pkg/graph/model"
 )
 
-func (r *queryResolver) FindTracksByTitle(ctx context.Context, title *string) ([]*model.Track, error) {
-	return r.doFindTracksByTitle(ctx, title)
+func (r *queryResolver) FindTracksByName(ctx context.Context, name *string) ([]*model.Track, error) {
+	return r.doFindTracksByName(ctx, name)
 }
 
 // Query returns generated.QueryResolver implementation.

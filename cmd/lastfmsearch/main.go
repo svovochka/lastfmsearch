@@ -1,10 +1,10 @@
 package main
 
 import (
-	"fmt"
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/jessevdk/go-flags"
+	"github.com/xlab/closer"
 	"lastfmsearch/cmd/lastfmsearch/config"
 	"lastfmsearch/pkg/graph"
 	"lastfmsearch/pkg/graph/generated"
@@ -22,7 +22,7 @@ func init() {
 	_, err := parser.Parse()
 	if err != nil {
 		if e, ok := err.(*flags.Error); !ok || e.Type != flags.ErrHelp {
-			fmt.Printf("Initialization error: %s.\n", err)
+			log.Printf("Initialization error: %s.\n", err)
 		}
 		os.Exit(1)
 	}
@@ -30,7 +30,8 @@ func init() {
 
 // main Main func
 func main() {
-	fmt.Println("Starting lastfmsearch service...")
+	log.Println("Starting lastfmsearch service...")
+	closer.Bind(cleanup)
 
 	client := lastfm.NewClient(cfg.LastfmApiEndpoint, cfg.LastfmApiKey, 1)
 	resolver := graph.NewResolver(client)
@@ -41,4 +42,10 @@ func main() {
 		log.Printf("connect to http://localhost:%s/playground for GraphQL playground", cfg.HttpPort)
 	}
 	log.Fatal(http.ListenAndServe(":"+cfg.HttpPort, nil))
+	closer.Hold()
+}
+
+// cleanup Callback on panic or system signal received
+func cleanup() {
+	log.Println("Service was stopped.")
 }

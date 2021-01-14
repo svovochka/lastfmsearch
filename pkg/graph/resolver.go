@@ -21,14 +21,14 @@ type Resolver struct {
 }
 
 func (r *Resolver) doFindTracksByName(ctx context.Context, name *string) ([]*model.Track, error) {
-	withArtists := false
+	withArtist := false
 	for _, field := range graphql.CollectFieldsCtx(ctx, nil) {
 		if field.Name == "artist" {
-			withArtists = true
+			withArtist = true
 		}
 	}
 	loader := lastfmsearch.NewLoader(r.lastfmClient)
-	tracks, err := loader.FindTracksByName(ctx, *name, withArtists)
+	tracks, err := loader.FindTracksByName(ctx, *name, withArtist)
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute http request: %w", err)
 	}

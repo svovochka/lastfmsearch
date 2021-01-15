@@ -15,6 +15,8 @@ const perPage = 100
 // TODO This limitation was added in dev purposes because the number of results could be astronomic :)
 const maxPages = 2
 
+const maxRequests = 4
+
 // Track Domain model
 type Track struct {
 	Name       string
@@ -39,6 +41,9 @@ type Loader struct {
 	tracks       []*Track
 	artistsMu    sync.Mutex
 	artists      []*Artist
+	errCh        chan error
+	doneCh       chan bool
+	queueCh      chan bool
 }
 
 // NewLoader Creates new loader
@@ -50,20 +55,21 @@ func NewLoader(c *lastfm.Client) *Loader {
 
 // FindTracksByName Loads tracks list
 func (l *Loader) FindTracksByName(ctx context.Context, name string, withArtist bool) ([]*Track, error) {
-	errCh := make(chan error)
-	doneCh := make(chan bool)
+	l.errCh = make(chan error)
+	l.doneCh = make(chan bool)
+	l.queueCh = make(chan bool, maxRequests)
 	var wg sync.WaitGroup
 	wg.Add(1)
-	go loadTracksPage(ctx, &wg, errCh, l, 1, name, withArtist)
+	go loadTracksPage(ctx, &wg, l, 1, name, withArtist)
 	go func() {
 		wg.Wait()
-		close(doneCh)
+		close(l.doneCh)
 	}()
 
 	select {
-	case <-doneCh:
+	case <-l.doneCh:
 		break
-	case err := <-errCh:
+	case err := <-l.errCh:
 		return nil, err
 	}
 
@@ -74,17 +80,20 @@ func (l *Loader) FindTracksByName(ctx context.Context, name string, withArtist b
 func loadTracksPage(
 	ctx context.Context,
 	wg *sync.WaitGroup,
-	errCh chan error,
 	l *Loader,
 	page int,
 	name string,
 	withArtist bool,
 ) {
 	defer wg.Done()
+	l.queueCh <- true
+	defer func() {
+		<-l.queueCh
+	}()
 
 	result, err := method.TrackSearch(ctx, l.lastfmClient, name, page, perPage)
 	if err != nil {
-		errCh <- fmt.Errorf("failed to get tracks list: %w", err)
+		l.errCh <- fmt.Errorf("failed to get tracks list: %w", err)
 		return
 	}
 
@@ -105,7 +114,7 @@ func loadTracksPage(
 			l.artistsMu.Unlock()
 			if track.Artist == nil {
 				wg.Add(1)
-				go loadArtistForTrack(ctx, wg, errCh, l, track)
+				go loadArtistForTrack(ctx, wg, l, track)
 			}
 		}
 	}
@@ -118,15 +127,19 @@ func loadTracksPage(
 	}
 
 	wg.Add(1)
-	go loadTracksPage(ctx, wg, errCh, l, nextPage, name, withArtist)
+	go loadTracksPage(ctx, wg, l, nextPage, name, withArtist)
 }
 
-func loadArtistForTrack(ctx context.Context, wg *sync.WaitGroup, errCh chan error, l *Loader, track *Track) {
+func loadArtistForTrack(ctx context.Context, wg *sync.WaitGroup, l *Loader, track *Track) {
 	defer wg.Done()
+	l.queueCh <- true
+	defer func() {
+		<-l.queueCh
+	}()
 
 	result, err := method.ArtistInfo(ctx, l.lastfmClient, track.ArtistName)
 	if err != nil {
-		errCh <- fmt.Errorf("failed to get tracks list: %w", err)
+		l.errCh <- fmt.Errorf("failed to get artist info: %w", err)
 		return
 	}
 

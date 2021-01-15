@@ -1,0 +1,19 @@
+version: "3"
+
+services:
+  lastfmsearch-build:
+    container_name: lastfmsearch-build
+    image: library/golang:1.14.13
+    volumes:
+      - ".:/app"
+    environment:
+      GOFLAGS: "-mod=vendor"
+    command:
+      - /bin/sh
+      - -c
+      - |
+        cd /app
+        go mod vendor
+        go build -o ./lastfmsearch ./cmd/lastfmsearch
+        chmod 777 ./lastfmsearch
+        chmod -R 777 ./vendor

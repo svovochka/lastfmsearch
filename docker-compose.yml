@@ -1,0 +1,13 @@
+version: "3"
+
+services:
+  lastfmsearch-server:
+    container_name: lastfmsearch-server
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    ports:
+      - "8080:80"
+    environment:
+      CL_ENABLE_PLAYGROUND: 1
+      CL_LASTFM_API_KEY: e4884b9056016a2e9e5ab47fe3d154d4

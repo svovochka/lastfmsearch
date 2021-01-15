@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"lastfmsearch/pkg/lastfm"
-	"regexp"
+	"net/url"
 )
 
 // ArtistInfoResp API response
@@ -27,8 +27,7 @@ type Bio struct {
 
 // ArtistInfo Returns artist info
 func ArtistInfo(ctx context.Context, client *lastfm.Client, name string) (*ArtistInfoResp, error) {
-	regex := regexp.MustCompile("\\s+")
-	name = regex.ReplaceAllString(name, "+")
+	name = url.QueryEscape(name)
 	query := fmt.Sprintf(
 		"%s/?api_key=%s&method=artist.getinfo&artist=%s&format=json",
 		client.Endpoint,

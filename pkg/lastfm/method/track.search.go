@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"lastfmsearch/pkg/lastfm"
-	"regexp"
+	"net/url"
 )
 
 // TrackSearchResp API response
@@ -33,8 +33,7 @@ type TrackItem struct {
 
 // ArtistInfo Returns artist info
 func TrackSearch(ctx context.Context, client *lastfm.Client, name string, page int, limit int) (*TrackSearchResp, error) {
-	regex := regexp.MustCompile("\\s+")
-	name = regex.ReplaceAllString(name, "+")
+	name = url.QueryEscape(name)
 	query := fmt.Sprintf(
 		"%s/?api_key=%s&method=track.search&track=%s&page=%d&limit=%d&format=json",
 		client.Endpoint,
